@@ -26,7 +26,13 @@ Public Enum SortDirection
     Ascending = 1
     Descending = 2
 End Enum
+Private Enum AllocationEnum
+    isNotCalculated = 0
+    isTrue = 1
+    isFalse = 2
+End Enum
 
+Private pAlloc As AllocationEnum
 Private pArr As Variant
 Private pInitialised As Boolean
 
@@ -71,7 +77,8 @@ End Sub
 
 Public Sub push(ByVal el As Variant)
   If pInitialised Then
-    If IsArrayAllocated(pArr) Then
+    If pAlloc = isNotCalculated Then pAlloc = AllocationCheck(pArr)
+    If pAlloc = isTrue Then
       ReDim Preserve pArr(UBound(pArr) + 1)
       If IsObject(el) Then
         Set pArr(UBound(pArr)) = el
@@ -1301,6 +1308,29 @@ Private Function IsArrayAllocated(arr As Variant) As Boolean
         IsArrayAllocated = False
     End If
 
+End Function
+                                                                                        
+'virtually a copy of IsArrayAllocated
+Private Function AllocationCheck(arr As Variant) As AllocationEnum
+    Dim n As Long
+    
+    ' If Arr is not an array, return FALSE and get out.
+    If IsArray(arr) = False Then
+        AllocationCheck = isFalse
+        Exit Function
+    End If
+    
+    ' Try to get the UBound of the array. If the array has not been allocated,
+    ' an error will occur. Test Err.Number to see if an error occured.
+    On Error Resume Next
+    n = UBound(arr, 1)
+    If Err.Number = 0 Then
+        ' No error. Array has been allocated.
+        AllocationCheck = isTrue
+    Else
+        ' Error. Unallocated array.
+        AllocationCheck = isFalse
+    End If
 End Function
 
 '##########################################################################################################
